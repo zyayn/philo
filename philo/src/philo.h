@@ -19,9 +19,6 @@
 # include <pthread.h>
 # include <sys/time.h>
 
-# define CONVERSION "cspdiuxX%"
-# define BIGHEX "0123456789ABCDEF"
-# define SMALLHEX "0123456789abcdef"
 # define MAX_PHI 4242
 
 typedef struct s_rules
