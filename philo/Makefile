@@ -10,23 +10,23 @@
 #                                                                              #
 # **************************************************************************** #
 
-NAME        =   philo
+NAME		=	philo
 
-CC          =   gcc
-CFLAGS      =   -g -Werror -Wextra -Wall
+CC			=	gcc
+CFLAGS		=	-g -Werror -Wextra -Wall
 
-SRC_PATH    =   src/
-OBJ_PATH    =   obj/
+SRC_PATH	=	src/
+OBJ_PATH	=	obj/
 
-SRC         =   philo.c \
+SRC			=	philo.c \
 				eat_sleep_think.c \
 				est_utils.c \
 				ft_minilib.c \
 				ft_strlib.c \
 				ft_miniprintf.c
 
-OBJ         =   $(SRC:.c=.o)
-OBJS        =   $(addprefix $(OBJ_PATH), $(OBJ))
+OBJ			=	$(SRC:.c=.o)
+OBJS		=	$(addprefix $(OBJ_PATH), $(OBJ))
 
 all: $(NAME)
 

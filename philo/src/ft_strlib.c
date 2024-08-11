@@ -6,15 +6,15 @@
 /*   By: zchia <zchia@42.sg>                        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/09/17 01:39:10 by zchia             #+#    #+#             */
-/*   Updated: 2024/08/09 20:01:45 by zchia            ###   ########.fr       */
+/*   Updated: 2024/08/09 22:34:19 by zchia            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
-size_t	ft_strlen(const char *s)
+int	ft_strlen(const char *s)
 {
-	size_t	i;
+	int	i;
 
 	i = 0;
 	while (s[i])
@@ -22,9 +22,9 @@ size_t	ft_strlen(const char *s)
 	return (i);
 }
 
-size_t	ft_strlcpy(char *dst, const char *src, size_t dstsize)
+int	ft_strlcpy(char *dst, const char *src, int dstsize)
 {
-	size_t	i;
+	int	i;
 
 	i = 0;
 	if (dstsize > 0)

@@ -70,7 +70,7 @@ int		eat_sleep_think(t_rules rules, t_philo *phi);
 
 int		ft_printf(const char *param, ...);
 char	*ft_getstr(char *s);
-size_t	ft_strlen(const char *s);
+int		ft_strlen(const char *s);
 int		ft_atoi(const char *str);
 int		ft_isint(const char *str);
 
