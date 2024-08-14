@@ -20,10 +20,7 @@ OBJ_PATH	=	obj/
 
 SRC			=	philo.c \
 				eat_sleep_think.c \
-				est_utils.c \
-				ft_minilib.c \
-				ft_strlib.c \
-				ft_miniprintf.c
+				est_utils.c
 
 OBJ			=	$(SRC:.c=.o)
 OBJS		=	$(addprefix $(OBJ_PATH), $(OBJ))

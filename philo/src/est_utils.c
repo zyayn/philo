@@ -12,6 +12,25 @@
 
 #include "philo.h"
 
+int	ft_isint(const char *str)
+{
+	int	nbr;
+
+	nbr = 0;
+	while (*str == ' ' || *str == '\t')
+		str++;
+	if (*str == '-' || *str == '+')
+		str++;
+	while (*str >= '0' && *str <= '9')
+	{
+		nbr = 1;
+		str++;
+	}
+	while (*str == ' ' || *str == '\t')
+		str++;
+	return (nbr && *str == '\0');
+}
+
 int	get_time(void)
 {
 	struct timeval	time;
@@ -20,54 +39,39 @@ int	get_time(void)
 	return (time.tv_sec * 1000 + time.tv_usec / 1000);
 }
 
-void	print_log(t_param *param, int id, char *status)
+void	print_log(t_philo *phi, char *status)
 {
-	pthread_mutex_lock(&param->print_mutex);
-	if (!param->stop)
-		ft_printf("%d %d %s\n", get_time() - param->begin_time, id, status);
-	pthread_mutex_unlock(&param->print_mutex);
+	pthread_mutex_lock(&phi->param->print_mutex);
+	if (!phi->param->stop)
+		printf("%d %d %s\n", get_time() - phi->param->begin_time,
+			phi->phi_id, status);
+	pthread_mutex_unlock(&phi->param->print_mutex);
 }
 
-void	destroy_param(t_param *param)
-{
-	int	i;
-
-	i = 0;
-	while (i < param->rules.nbr_phi)
-	{
-		pthread_mutex_destroy(&param->philos[i].die_mutex);
-		pthread_mutex_destroy(&param->philos[i].eat_mutex);
-		i++;
-	}
-	pthread_mutex_destroy(&param->print_mutex);
-	free(param->forks);
-	free(param);
-}
-
-void	eat(t_param *param, t_philo *phi, t_fork *forks)
+void	eat(t_philo *phi, t_fork *forks)
 {
 	int	first_fork;
 	int	second_fork;
 
 	first_fork = phi->phi_id;
-	second_fork = (phi->phi_id + 1) % param->rules.nbr_phi;
+	second_fork = (phi->phi_id + 1) % phi->param->rules.nbr_phi;
 	if (!(phi->phi_id % 2))
 	{
-		first_fork = (phi->phi_id + 1) % param->rules.nbr_phi;
+		first_fork = (phi->phi_id + 1) % phi->param->rules.nbr_phi;
 		second_fork = phi->phi_id;
 	}
 	pthread_mutex_lock(&forks[first_fork].fork_mutex);
-	print_log(param, phi->phi_id, "has taken a fork");
+	print_log(phi, "has taken a fork");
 	pthread_mutex_lock(&forks[second_fork].fork_mutex);
-	print_log(param, phi->phi_id, "has taken a fork");
-	pthread_mutex_lock(&param->philos[phi->phi_id].eat_mutex);
-	print_log(param, phi->phi_id, "is eating");
-	pthread_mutex_lock(&param->philos[phi->phi_id].die_mutex);
+	print_log(phi, "has taken a fork");
+	pthread_mutex_lock(&phi->eat_mutex);
+	print_log(phi, "is eating");
+	pthread_mutex_lock(&phi->die_mutex);
 	phi->start_time = get_time();
-	pthread_mutex_unlock(&param->philos[phi->phi_id].die_mutex);
-	usleep(param->rules.t_eat * 1000);
+	pthread_mutex_unlock(&phi->die_mutex);
+	usleep(phi->param->rules.t_eat * 1000);
 	phi->nbr_eaten++;
-	pthread_mutex_unlock(&param->philos[phi->phi_id].eat_mutex);
+	pthread_mutex_unlock(&phi->eat_mutex);
 	pthread_mutex_unlock(&forks[second_fork].fork_mutex);
 	pthread_mutex_unlock(&forks[first_fork].fork_mutex);
 }
@@ -75,24 +79,22 @@ void	eat(t_param *param, t_philo *phi, t_fork *forks)
 void	*est_actions(void *arg)
 {
 	t_philo	*phi;
-	t_param	*param;
 
 	phi = (t_philo *)arg;
-	param = phi->param;
-	while (!param->stop)
+	if (phi->param->rules.nbr_phi == 1)
 	{
-		if (!phi->is_dead && phi->nbr_eaten < param->rules.nbr_eat)
+		print_log(phi, "has taken a fork");
+		usleep(phi->param->rules.t_die * 1000);
+		return (NULL);
+	}
+	while (!phi->param->stop)
+	{
+		if (phi->nbr_eaten < phi->param->rules.nbr_eat)
 		{
-			if (param->rules.nbr_phi == 1)
-			{
-				print_log(param, phi->phi_id, "has taken a fork");
-				usleep(param->rules.t_die * 1000);
-				break ;
-			}
-			eat(param, phi, param->forks);
-			print_log(param, phi->phi_id, "is sleeping");
-			usleep(param->rules.t_sleep * 1000);
-			print_log(param, phi->phi_id, "is thinking");
+			eat(phi, phi->param->forks);
+			print_log(phi, "is sleeping");
+			usleep(phi->param->rules.t_sleep * 1000);
+			print_log(phi, "is thinking");
 		}
 	}
 	return (NULL);

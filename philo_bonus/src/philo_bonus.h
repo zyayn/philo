@@ -14,6 +14,7 @@
 # define PHILO_BONUS_H
 
 # include <unistd.h>
+# include <stdio.h>
 # include <stdarg.h>
 # include <stdlib.h>
 # include <semaphore.h>
@@ -32,38 +33,30 @@ typedef struct s_rules
 	int	nbr_eat;
 }	t_rules;
 
-typedef struct s_philo
-{
-	pid_t			pid;
-	int				phi_id;
-	int				nbr_eaten;
-	int				start_time;
-	int				t_hungry;
-	int				is_dead;
-	struct s_param	*param;
-}	t_philo;
-
 typedef struct s_param
 {
 	t_rules	rules;
-	t_philo	*philos;
 	sem_t	*forks;
-	sem_t	*print_sem;	
+	sem_t	*print_sem;
 	int		begin_time;
 	int		stop;
 }	t_param;
 
-int		init_param(t_param *param, t_rules rules, t_philo *phi);
-int		init_sem(t_param *param, t_rules rules);
-void	monitor(t_param *param);
-void	est_actions(t_philo *phi);
-void	cleanup(t_param *param);
-void	print_log(t_param *param, int id, char *status);
-int		get_time(void);
+typedef struct s_philo
+{
+	pid_t	pid;
+	int		phi_id;
+	int		nbr_eaten;
+	int		start_time;
+	int		t_hungry;
+	int		is_dead;
+	t_param	*param;
+}	t_philo;
 
-int		ft_printf(const char *param, ...);
-char	*ft_getstr(char *s);
-int		ft_strlen(const char *s);
+int		eat_sleep_think(t_rules rules, t_philo *phi);
+void	*est_actions(void *arg);
+void	print_log(t_philo *phi, char *status);
+int		get_time(void);
 int		ft_atoi(const char *str);
 int		ft_isint(const char *str);
 

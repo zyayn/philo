@@ -12,34 +12,6 @@
 
 #include "philo_bonus.h"
 
-int	eat_sleep_think(t_rules rules, t_philo *phi)
-{
-	t_param	*param;
-	int		i;
-
-	param = (t_param *)malloc(sizeof(t_param));
-	if (!param || init_param(param, rules, phi) == -1)
-		return (-1);
-	i = 0;
-	while (i < param->rules.nbr_phi)
-	{
-		param->philos[i].param = param;
-		param->philos[i].start_time = get_time();
-		param->philos[i].pid = fork();
-		if (param->philos[i].pid == -1)
-		{
-			cleanup(param);
-			return (-1);
-		}
-		else if (!param->philos[i].pid)
-			est_actions(&param->philos[i]);
-		i++;
-	}
-	monitor(param);
-	cleanup(param);
-	return (0);
-}
-
 static t_philo	*init_phi(t_rules rules)
 {
 	int		i;
@@ -48,18 +20,16 @@ static t_philo	*init_phi(t_rules rules)
 	phi = (t_philo *)malloc(sizeof(t_philo) * rules.nbr_phi);
 	if (!phi)
 	{
-		ft_printf("Error: Memory allocation failed for philosophers.\n");
+		printf("Error: Memory allocation failed for philosophers.\n");
 		return (NULL);
 	}
 	i = 0;
 	while (i < rules.nbr_phi)
 	{
+		phi[i].pid = -1;
 		phi[i].phi_id = i;
 		phi[i].nbr_eaten = 0;
-		phi[i].t_hungry = 0;
-		phi[i].is_dead = 0;
 		phi[i].start_time = 0;
-		phi[i].pid = -1;
 		i++;
 	}
 	return (phi);
@@ -96,22 +66,22 @@ int	main(int argc, char **argv)
 
 	if (argc != 5 && argc != 6)
 	{
-		ft_printf("Error: Number of arguments must be either 4 or 5.\n");
+		printf("Error: Number of arguments must be either 4 or 5.\n");
 		return (1);
 	}
 	if (init_rules(&rules, argv) == -1)
 	{
-		ft_printf("Error: Unable to initialize rules!\n");
+		printf("Error: Unable to initialise rules!\n");
 		return (1);
 	}
 	phi = init_phi(rules);
 	if (!phi)
 	{
-		ft_printf("Error: Unable to initialize philosophers!\n");
+		printf("Error: Unable to initialise philosophers!\n");
 		return (1);
 	}
 	if (eat_sleep_think(rules, phi) == -1)
-		ft_printf("Process error in eat, sleep, think!\n");
+		printf("Process error in eat, sleep, think!\n");
 	free(phi);
 	return (0);
 }

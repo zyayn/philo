@@ -12,63 +12,71 @@
 
 #include "philo.h"
 
-void	check_dead(t_param *param, int id)
+void	cleanup(t_param *param, t_philo *phi)
 {
-	pthread_mutex_lock(&param->philos[id].die_mutex);
-	param->philos[id].t_hungry = get_time() - param->philos[id].start_time;
-	if (param->philos[id].t_hungry >= param->rules.t_die
-		&& !param->philos[id].is_dead)
+	int	i;
+
+	i = 0;
+	while (i < param->rules.nbr_phi)
 	{
-		print_log(param, id, "died");
-		param->philos[id].is_dead = 1;
-		param->stop = 1;
+		pthread_mutex_destroy(&phi[i].die_mutex);
+		pthread_mutex_destroy(&phi[i].eat_mutex);
+		i++;
 	}
-	pthread_mutex_unlock(&param->philos[id].die_mutex);
+	pthread_mutex_destroy(&param->print_mutex);
+	free(param->forks);
+	free(param);
 }
 
-void	check_all_eaten(t_param *param)
+void	check_all_eaten(t_philo *phi)
 {
 	int	i;
 	int	phi_full;
 
 	phi_full = 0;
 	i = 0;
-	while (i < param->rules.nbr_phi)
+	while (i < phi->param->rules.nbr_phi)
 	{
-		if (param->philos[i].nbr_eaten >= param->rules.nbr_eat)
+		if (phi[i].nbr_eaten >= phi->param->rules.nbr_eat)
 			phi_full++;
 		i++;
 	}
-	if (phi_full == param->rules.nbr_phi)
-		param->stop = 1;
+	if (phi_full == phi->param->rules.nbr_phi)
+		phi->param->stop = 1;
 }
 
-void	check_status(t_param *param, t_rules rules)
+void	check_status(t_philo *phi)
 {
 	int	i;
 
-	while (!param->stop)
+	while (!phi->param->stop)
 	{
 		i = 0;
-		while (i < rules.nbr_phi)
+		while (i < phi->param->rules.nbr_phi)
 		{
-			check_dead(param, i);
-			check_all_eaten(param);
+			pthread_mutex_lock(&phi[i].die_mutex);
+			if (!phi->param->stop && get_time() - phi[i].start_time
+				>= phi->param->rules.t_die)
+			{
+				print_log(phi, "died");
+				phi[i].param->stop = 1;
+			}
+			pthread_mutex_unlock(&phi[i].die_mutex);
 			i++;
 		}
+		check_all_eaten(phi);
 	}
 }
 
-int	init_param(t_param *param, t_rules rules, t_philo *phi)
+int	init_param(t_param *param, t_rules rules)
 {
 	int	i;
 
 	param->rules = rules;
-	param->philos = phi;
 	param->forks = malloc(sizeof(t_fork) * rules.nbr_phi);
 	if (!param->forks)
 	{
-		ft_printf("Error: Memory allocation failed for forks.\n");
+		printf("Error: Memory allocation failed for forks.\n");
 		free(param);
 		return (-1);
 	}
@@ -91,24 +99,24 @@ int	eat_sleep_think(t_rules rules, t_philo *phi)
 	t_param	*param;
 
 	param = (t_param *)malloc(sizeof(t_param));
-	if (!param || init_param(param, rules, phi) == -1)
+	if (!param || init_param(param, rules) == -1)
 		return (-1);
 	i = -1;
 	while (++i < rules.nbr_phi)
 	{
-		param->philos[i].param = param;
-		param->philos[i].start_time = get_time();
-		if (pthread_create(&param->philos[i].thread_id, NULL,
-				est_actions, (void *)&param->philos[i]))
+		phi[i].param = param;
+		phi[i].start_time = get_time();
+		if (pthread_create(&phi[i].thread_id, NULL,
+				est_actions, (void *)&phi[i]))
 		{
-			ft_printf("Error: Unable to create thread.\n");
+			printf("Error: Unable to create thread.\n");
 			free(param);
 			return (-1);
 		}
 	}
-	check_status(param, rules);
+	check_status(phi);
 	while (--i >= 0)
-		pthread_join(param->philos[i].thread_id, NULL);
-	destroy_param(param);
+		pthread_join(phi[i].thread_id, NULL);
+	cleanup(param, phi);
 	return (0);
 }
