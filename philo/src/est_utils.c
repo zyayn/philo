@@ -95,6 +95,7 @@ void	*est_actions(void *arg)
 			print_log(phi, "is sleeping");
 			usleep(phi->param->rules.t_sleep * 1000);
 			print_log(phi, "is thinking");
+			usleep(1000);
 		}
 	}
 	return (NULL);

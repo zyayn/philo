@@ -19,7 +19,7 @@
 # include <pthread.h>
 # include <sys/time.h>
 
-# define MAX_PHI 1000
+# define MAX_PHI 200
 
 typedef struct s_rules
 {
