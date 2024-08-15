@@ -15,12 +15,11 @@
 
 # include <unistd.h>
 # include <stdio.h>
-# include <stdarg.h>
 # include <stdlib.h>
 # include <pthread.h>
 # include <sys/time.h>
 
-# define MAX_PHI 4242
+# define MAX_PHI 1000
 
 typedef struct s_rules
 {
@@ -51,7 +50,7 @@ typedef struct s_philo
 	pthread_t		thread_id;
 	int				phi_id;
 	int				nbr_eaten;
-	int				start_time;
+	int				start_eat;
 	t_param			*param;
 	pthread_mutex_t	eat_mutex;
 	pthread_mutex_t	die_mutex;

@@ -45,7 +45,7 @@ void	check_all_eaten(t_philo *phi)
 		phi->param->stop = 1;
 }
 
-void	check_status(t_philo *phi)
+void	monitor(t_philo *phi)
 {
 	int	i;
 
@@ -55,7 +55,7 @@ void	check_status(t_philo *phi)
 		while (i < phi->param->rules.nbr_phi)
 		{
 			pthread_mutex_lock(&phi[i].die_mutex);
-			if (!phi->param->stop && get_time() - phi[i].start_time
+			if (!phi->param->stop && get_time() - phi[i].start_eat
 				>= phi->param->rules.t_die)
 			{
 				print_log(phi, "died");
@@ -105,7 +105,7 @@ int	eat_sleep_think(t_rules rules, t_philo *phi)
 	while (++i < rules.nbr_phi)
 	{
 		phi[i].param = param;
-		phi[i].start_time = get_time();
+		phi[i].start_eat = get_time();
 		if (pthread_create(&phi[i].thread_id, NULL,
 				est_actions, (void *)&phi[i]))
 		{
@@ -114,7 +114,7 @@ int	eat_sleep_think(t_rules rules, t_philo *phi)
 			return (-1);
 		}
 	}
-	check_status(phi);
+	monitor(phi);
 	while (--i >= 0)
 		pthread_join(phi[i].thread_id, NULL);
 	cleanup(param, phi);

@@ -44,7 +44,7 @@ void	print_log(t_philo *phi, char *status)
 	pthread_mutex_lock(&phi->param->print_mutex);
 	if (!phi->param->stop)
 		printf("%d %d %s\n", get_time() - phi->param->begin_time,
-			phi->phi_id, status);
+			phi->phi_id + 1, status);
 	pthread_mutex_unlock(&phi->param->print_mutex);
 }
 
@@ -67,7 +67,7 @@ void	eat(t_philo *phi, t_fork *forks)
 	pthread_mutex_lock(&phi->eat_mutex);
 	print_log(phi, "is eating");
 	pthread_mutex_lock(&phi->die_mutex);
-	phi->start_time = get_time();
+	phi->start_eat = get_time();
 	pthread_mutex_unlock(&phi->die_mutex);
 	usleep(phi->param->rules.t_eat * 1000);
 	phi->nbr_eaten++;

@@ -12,50 +12,6 @@
 
 #include "philo_bonus.h"
 
-int	ft_isint(const char *str)
-{
-	int	nbr;
-
-	nbr = 0;
-	while (*str == ' ' || *str == '\t')
-		str++;
-	if (*str == '-' || *str == '+')
-		str++;
-	while (*str >= '0' && *str <= '9')
-	{
-		nbr = 1;
-		str++;
-	}
-	while (*str == ' ' || *str == '\t')
-		str++;
-	return (nbr && *str == '\0');
-}
-
-int	ft_atoi(const char *str)
-{
-	int	nbr;
-	int	sign;
-	int	i;
-
-	nbr = 0;
-	sign = 1;
-	i = 0;
-	while ((str[i] >= 9 && str[i] <= 13) || str[i] == 32)
-		i++;
-	if (str[i] == '+' || str[i] == '-')
-	{
-		if (str[i] == '-')
-			sign *= -1;
-		i++;
-	}
-	while (str[i] && str[i] >= '0' && str[i] <= '9')
-	{
-		nbr = nbr * 10 + (str[i] - '0');
-		i++;
-	}
-	return (sign * nbr);
-}
-
 int	get_time(void)
 {
 	struct timeval	time;
@@ -66,41 +22,63 @@ int	get_time(void)
 
 void	print_log(t_philo *phi, char *status)
 {
-	sem_wait(phi->param->print_sem);
-	if (!phi->param->stop)
-		printf("%d %d %s\n", get_time() - phi->param->begin_time,
-			phi->phi_id, status);
-	sem_post(phi->param->print_sem);
+	printf("%d %d %s\n", get_time() - phi->param->begin_time,
+		phi->phi_id + 1, status);
+}
+
+void	*monitor_philo(void *arg)
+{
+	t_philo	*phi;
+	int		hungry;
+
+	phi = (t_philo *)arg;
+	while (1)
+	{
+		hungry = get_time() - phi->start_eat;
+		if (hungry > phi->param->rules.t_die)
+		{
+			print_log(phi, "died");
+			exit(0);
+		}
+		usleep(100);
+	}
+	return (NULL);
+}
+
+void	eat(t_philo *phi)
+{
+	sem_wait(phi->param->forks);
+	print_log(phi, "has taken a fork");
+	sem_wait(phi->param->forks);
+	print_log(phi, "has taken a fork");
+	phi->start_eat = get_time();
+	print_log(phi, "is eating");
+	usleep(phi->param->rules.t_eat * 1000);
+	phi->nbr_eaten++;
+	if (phi->nbr_eaten == phi->param->rules.nbr_eat)
+		phi->is_full = 1;
+	sem_post(phi->param->forks);
+	sem_post(phi->param->forks);
 }
 
 void	*est_actions(void *arg)
 {
-	t_philo	*phi;
+	t_philo		*phi;
+	pthread_t	monitor_thread;
 
 	phi = (t_philo *)arg;
-	if (phi->param->rules.nbr_phi == 1)
+	if (pthread_create(&monitor_thread, NULL, monitor_philo, (void *)phi) != 0)
+		return (NULL);
+	pthread_detach(monitor_thread);
+	while (!phi->is_full)
 	{
-		print_log(phi, "has taken a fork");
-		usleep(phi->param->rules.t_die * 1000);
-		exit(0);
-	}
-	while (!phi->param->stop && phi->nbr_eaten < phi->param->rules.nbr_eat)
-	{
-		sem_wait(phi->param->forks);
-		print_log(phi, "has taken a fork");
-		sem_wait(phi->param->forks);
-		print_log(phi, "has taken a fork");
-		sem_wait(phi->param->print_sem);
-		phi->start_time = get_time();
-		sem_post(phi->param->print_sem);
-		print_log(phi, "is eating");
-		usleep(phi->param->rules.t_eat * 1000);
-		phi->nbr_eaten++;
-		sem_post(phi->param->forks);
-		sem_post(phi->param->forks);
+		eat(phi);
 		print_log(phi, "is sleeping");
 		usleep(phi->param->rules.t_sleep * 1000);
+		if (phi->is_full)
+			exit(0);
 		print_log(phi, "is thinking");
 	}
+	exit(0);
 	return (NULL);
 }

@@ -15,14 +15,14 @@
 
 # include <unistd.h>
 # include <stdio.h>
-# include <stdarg.h>
 # include <stdlib.h>
-# include <semaphore.h>
-# include <signal.h>
+# include <pthread.h>
 # include <sys/time.h>
 # include <fcntl.h>
+# include <sys/wait.h>
+# include <semaphore.h>
 
-# define MAX_PHI 4242
+# define MAX_PHI 1000
 
 typedef struct s_rules
 {
@@ -36,10 +36,8 @@ typedef struct s_rules
 typedef struct s_param
 {
 	t_rules	rules;
-	sem_t	*forks;
-	sem_t	*print_sem;
 	int		begin_time;
-	int		stop;
+	sem_t	*forks;
 }	t_param;
 
 typedef struct s_philo
@@ -47,17 +45,14 @@ typedef struct s_philo
 	pid_t	pid;
 	int		phi_id;
 	int		nbr_eaten;
-	int		start_time;
-	int		t_hungry;
-	int		is_dead;
+	int		start_eat;
+	int		is_full;
 	t_param	*param;
 }	t_philo;
 
 int		eat_sleep_think(t_rules rules, t_philo *phi);
 void	*est_actions(void *arg);
-void	print_log(t_philo *phi, char *status);
 int		get_time(void);
-int		ft_atoi(const char *str);
 int		ft_isint(const char *str);
 
 #endif
