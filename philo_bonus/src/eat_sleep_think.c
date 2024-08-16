@@ -35,7 +35,8 @@ void	clean_sem(t_param *param)
 {
 	sem_close(param->forks);
 	sem_unlink("forks");
-	sem_unlink("term");
+	sem_close(param->stop_sem);
+	sem_unlink("stop");
 }
 
 void	kill_and_clean(t_param *param, t_philo *phi)
@@ -62,8 +63,12 @@ int	init_param(t_param *param, t_rules rules)
 {
 	param->rules = rules;
 	param->begin_time = get_time();
+	param->stop = 0;
+	param->nbr_full = 0;
+	clean_sem(param);
 	param->forks = sem_open("forks", O_CREAT, 0644, param->rules.nbr_phi);
-	if (param->forks == SEM_FAILED)
+	param->stop_sem = sem_open("stop", O_CREAT, 0644, 0);
+	if (param->forks == SEM_FAILED || param->stop_sem == SEM_FAILED)
 	{
 		clean_sem(param);
 		printf("Error: Failed to initialise semaphores.\n");
@@ -75,8 +80,10 @@ int	init_param(t_param *param, t_rules rules)
 int	eat_sleep_think(t_rules rules, t_philo *phi)
 {
 	t_param	*param;
+	int		nbr_full;
 	int		i;
 
+	nbr_full = 0;
 	param = (t_param *)malloc(sizeof(t_param));
 	if (!param || init_param(param, rules) == -1)
 		return (-1);
@@ -92,10 +99,13 @@ int	eat_sleep_think(t_rules rules, t_philo *phi)
 			free(param);
 			return (-1);
 		}
-		else if (phi[i].pid == 0)
-			est_actions(&phi[i]);
+		else if (!phi[i].pid)
+			nbr_full += *(int *)est_actions(&phi[i]);
 		i++;
 	}
+	if (nbr_full == rules.nbr_phi)
+		sem_post(phi->param->stop_sem);
+	sem_wait(phi->param->stop_sem);
 	kill_and_clean(param, phi);
 	return (0);
 }

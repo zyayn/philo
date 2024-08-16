@@ -34,18 +34,21 @@ void	*monitor_philo(void *arg)
 	phi = (t_philo *)arg;
 	while (1)
 	{
+		if (phi->is_full)
+			break ;
 		hungry = get_time() - phi->start_eat;
 		if (hungry > phi->param->rules.t_die)
 		{
 			print_log(phi, "died");
-			exit(0);
+			sem_post(phi->param->stop_sem);
+			break ;
 		}
-		usleep(100);
+		usleep(1000);
 	}
 	return (NULL);
 }
 
-void	eat(t_philo *phi)
+int	eat(t_philo *phi)
 {
 	sem_wait(phi->param->forks);
 	print_log(phi, "has taken a fork");
@@ -59,10 +62,12 @@ void	eat(t_philo *phi)
 		phi->is_full = 1;
 	sem_post(phi->param->forks);
 	sem_post(phi->param->forks);
+	return (phi->is_full);
 }
 
 void	*est_actions(void *arg)
 {
+	int			is_full;
 	t_philo		*phi;
 	pthread_t	monitor_thread;
 
@@ -70,15 +75,16 @@ void	*est_actions(void *arg)
 	if (pthread_create(&monitor_thread, NULL, monitor_philo, (void *)phi) != 0)
 		return (NULL);
 	pthread_detach(monitor_thread);
-	while (!phi->is_full)
+	is_full = 0;
+	while (!is_full)
 	{
-		eat(phi);
+		is_full = eat(phi);
+		if (is_full)
+			phi->param->nbr_full++;
 		print_log(phi, "is sleeping");
 		usleep(phi->param->rules.t_sleep * 1000);
-		if (phi->is_full)
-			exit(0);
 		print_log(phi, "is thinking");
+		usleep(1000);
 	}
-	exit(0);
-	return (NULL);
+	return ((void *)1);
 }
