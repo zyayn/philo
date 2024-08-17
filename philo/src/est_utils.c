@@ -64,11 +64,11 @@ void	eat(t_philo *phi, t_fork *forks)
 	print_log(phi, "has taken a fork");
 	pthread_mutex_lock(&forks[second_fork].fork_mutex);
 	print_log(phi, "has taken a fork");
-	pthread_mutex_lock(&phi->eat_mutex);
 	print_log(phi, "is eating");
 	pthread_mutex_lock(&phi->die_mutex);
 	phi->start_eat = get_time();
 	pthread_mutex_unlock(&phi->die_mutex);
+	pthread_mutex_lock(&phi->eat_mutex);
 	usleep(phi->param->rules.t_eat * 1000);
 	phi->nbr_eaten++;
 	pthread_mutex_unlock(&phi->eat_mutex);

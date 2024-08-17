@@ -70,7 +70,7 @@ void	set_rules(t_rules *rules, char **argv)
 	if (argv[5] && ft_isint(argv[5]))
 		rules->nbr_eat = ft_atoi(argv[5]);
 	else
-		rules->nbr_eat = 2147483647;
+		rules->nbr_eat = MAX_INT;
 }
 
 int	init_rules(t_rules *rules, char **argv)

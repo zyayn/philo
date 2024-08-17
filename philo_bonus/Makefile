@@ -13,7 +13,7 @@
 NAME        =   philo_bonus
 
 CC          =   gcc
-CFLAGS      =   -g -Werror -Wextra -Wall
+CFLAGS      =   -Werror -Wextra -Wall
 
 SRC_PATH    =   src/
 OBJ_PATH    =   obj/

@@ -22,7 +22,8 @@
 # include <sys/wait.h>
 # include <semaphore.h>
 
-# define MAX_PHI 200
+# define MAX_INT 2147483647
+# define MAX_PHI 420
 
 typedef struct s_rules
 {
@@ -38,8 +39,8 @@ typedef struct s_param
 	t_rules	rules;
 	int		begin_time;
 	int		stop;
-	int		nbr_full;
 	sem_t	*stop_sem;
+	sem_t	*full_sem;
 	sem_t	*forks;
 }	t_param;
 

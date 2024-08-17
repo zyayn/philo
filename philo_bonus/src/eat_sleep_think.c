@@ -31,31 +31,20 @@ int	ft_isint(const char *str)
 	return (nbr && *str == '\0');
 }
 
-void	clean_sem(t_param *param)
-{
-	sem_close(param->forks);
-	sem_unlink("forks");
-	sem_close(param->stop_sem);
-	sem_unlink("stop");
-}
-
 void	kill_and_clean(t_param *param, t_philo *phi)
 {
 	int	i;
-	int	status;
 
 	i = 0;
 	while (i < param->rules.nbr_phi)
 	{
-		waitpid(-1, &status, 0);
-		if (WIFEXITED(status) && WEXITSTATUS(status))
-			break ;
+		kill(phi[i].pid, SIGKILL);
 		i++;
 	}
-	i = 0;
-	while (i < param->rules.nbr_phi)
-		kill(phi[i++].pid, SIGKILL);
-	clean_sem(param);
+	sem_close(param->forks);
+	sem_close(param->stop_sem);
+	sem_unlink("forks");
+	sem_unlink("stop");
 	free(param);
 }
 
@@ -64,26 +53,50 @@ int	init_param(t_param *param, t_rules rules)
 	param->rules = rules;
 	param->begin_time = get_time();
 	param->stop = 0;
-	param->nbr_full = 0;
-	clean_sem(param);
 	param->forks = sem_open("forks", O_CREAT, 0644, param->rules.nbr_phi);
 	param->stop_sem = sem_open("stop", O_CREAT, 0644, 0);
 	if (param->forks == SEM_FAILED || param->stop_sem == SEM_FAILED)
 	{
-		clean_sem(param);
-		printf("Error: Failed to initialise semaphores.\n");
+		sem_close(param->forks);
+		sem_close(param->stop_sem);
+		sem_unlink("forks");
+		sem_unlink("stop");
+		free(param);
 		return (-1);
 	}
+	sem_unlink("forks");
+	sem_unlink("stop");
 	return (0);
+}
+
+void	*monitor_full(void *arg)
+{
+	t_philo	*phi;
+	int		full_count;
+	int		status;
+
+	full_count = 0;
+	phi = (t_philo *)arg;
+	while (1)
+	{
+		if (waitpid(-1, &status, WNOHANG) > 0)
+			full_count++;
+		if (full_count == phi->param->rules.nbr_phi)
+		{
+			sem_post(phi->param->stop_sem);
+			break ;
+		}
+		usleep(1000);
+	}
+	exit (0);
 }
 
 int	eat_sleep_think(t_rules rules, t_philo *phi)
 {
-	t_param	*param;
-	int		nbr_full;
-	int		i;
+	t_param		*param;
+	pthread_t	monitor_thread;
+	int			i;
 
-	nbr_full = 0;
 	param = (t_param *)malloc(sizeof(t_param));
 	if (!param || init_param(param, rules) == -1)
 		return (-1);
@@ -94,17 +107,14 @@ int	eat_sleep_think(t_rules rules, t_philo *phi)
 		phi[i].start_eat = get_time();
 		phi[i].pid = fork();
 		if (phi[i].pid == -1)
-		{
-			clean_sem(param);
-			free(param);
 			return (-1);
-		}
 		else if (!phi[i].pid)
-			nbr_full += *(int *)est_actions(&phi[i]);
+			est_actions(&phi[i]);
 		i++;
 	}
-	if (nbr_full == rules.nbr_phi)
-		sem_post(phi->param->stop_sem);
+	if (pthread_create(&monitor_thread, NULL, monitor_full, (void *)phi))
+		return (-1);
+	pthread_detach(monitor_thread);
 	sem_wait(phi->param->stop_sem);
 	kill_and_clean(param, phi);
 	return (0);
